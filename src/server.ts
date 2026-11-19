@@ -4,11 +4,23 @@ import prisma from './config/database';
 
 const PORT = parseInt(process.env.PORT ?? '5000', 10);
 
+async function connectWithRetry(maxRetries = 10, delayMs = 1500): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await prisma.$connect();
+      console.log('✅ Database connected successfully');
+      return;
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      console.log(`⏳ Waiting for database connection (attempt ${attempt}/${maxRetries})...`);
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
 async function startServer(): Promise<void> {
   try {
-    
-    await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    await connectWithRetry();
 
     const app = createApp();
 

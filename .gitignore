@@ -25,6 +25,7 @@ prisma/*.db-journal
 .DS_Store
 Thumbs.db
 *.log
+.mongo-data/
 
 # ─── IDE ─────────────────────────────────────────
 .vscode/settings.json

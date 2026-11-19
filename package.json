@@ -5,7 +5,9 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
-    "dev:all": "concurrently --names \"BACKEND,FRONTEND,STUDIO\" --prefix-colors \"cyan,magenta,yellow\" \"npm run dev\" \"npm run dev --prefix frontend\" \"npx prisma studio --port 5555\"",
+    "db:start": "node scripts/start-mongo.js",
+    "db:setup": "node scripts/setup-local-db.js",
+    "dev:all": "concurrently --names \"MONGO,BACKEND,FRONTEND\" --prefix-colors \"green,cyan,magenta\" \"npm run db:start\" \"npm run dev\" \"npm run dev --prefix frontend\"",
     "build": "tsc",
     "start": "node dist/server.js",
     "db:migrate": "prisma db push",
