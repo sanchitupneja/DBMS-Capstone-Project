@@ -1,5 +1,4 @@
 import { PrismaClient, Gender, RoomStatus, RoomType } from '@prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import 'dotenv/config';
 
 /**
@@ -64,22 +63,6 @@ export interface AllocationSeedSummary {
   unassigned: number;
   byGender: Record<string, { total: number; allocated: number; unassigned: number }>;
   roomsUsed: number;
-}
-
-function getDbConfig() {
-  const raw = process.env.DATABASE_URL;
-  if (!raw) throw new Error('DATABASE_URL environment variable is required');
-  const mysqlPrefix = /^mysql:\/\//;
-  const u = new URL(raw.replace(mysqlPrefix, 'http://'));
-  const slashPrefix = /^\//;
-  return {
-    host: u.hostname,
-    port: parseInt(u.port || '3306', 10),
-    user: decodeURIComponent(u.username),
-    password: decodeURIComponent(u.password),
-    database: u.pathname.replace(slashPrefix, '').split('?')[0],
-    connectionLimit: 5,
-  };
 }
 
 /** Generates room numbers like A-101, A-102, A-201 ... for a block. */
@@ -353,8 +336,7 @@ export async function seedAllocations(
 }
 
 async function main() {
-  const adapter = new PrismaMariaDb(getDbConfig());
-  const prisma = new PrismaClient({ adapter });
+  const prisma = new PrismaClient();
 
   try {
     console.log('🌱 Seeding room allocations (100%, 3 beds per room)...');

@@ -1,23 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import bcrypt from 'bcryptjs';
 import 'dotenv/config';
 import { seedAllocations, DEFAULT_ACADEMIC_YEAR } from './seed-allocations';
 
-function getDbConfig() {
-  const raw = process.env.DATABASE_URL!;
-  const mysqlPrefix = /^mysql:\/\//;
-  const u = new URL(raw.replace(mysqlPrefix, 'http://'));
-  const slashPrefix = /^\//;
-  return {
-    host: u.hostname, port: parseInt(u.port || '3306', 10),
-    user: decodeURIComponent(u.username), password: decodeURIComponent(u.password),
-    database: u.pathname.replace(slashPrefix, '').split('?')[0],
-  };
-}
-
-const adapter = new PrismaMariaDb(getDbConfig());
-const prisma = new PrismaClient({ adapter });
+// Prisma reads DATABASE_URL (mongodb+srv://...) from schema.prisma.
+const prisma = new PrismaClient();
 
 const RAW_STUDENTS = [
   [1,'Aarav Sharma','aarav.sharma001@gmail.com','9000000001','MALE','Computer Science',1],
