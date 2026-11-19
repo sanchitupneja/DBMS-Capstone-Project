@@ -239,6 +239,22 @@ async function main() {
   const studentHash = await bcrypt.hash('Student@123', 12);
   const studentMap = new Map<number, string>();
 
+  // Ensure demo student shown on login screen exists
+  await prisma.student.upsert({
+    where: { email: 'sanchit@student.edu' },
+    update: { passwordHash: studentHash },
+    create: {
+      email: 'sanchit@student.edu',
+      passwordHash: studentHash,
+      fullName: 'Sanchit Upneja',
+      studentId: 'STU0000000',
+      phone: '9876543210',
+      gender: 'MALE',
+      course: 'Computer Science',
+      yearOfStudy: 4,
+    },
+  });
+
   for (const [id, fullName, email, phone, gender, course, yearOfStudy] of RAW_STUDENTS) {
     const studentId = `STU${String(id).padStart(7, '0')}`;
     await prisma.student.deleteMany({ where: { studentId, NOT: { email: email as string } } });
