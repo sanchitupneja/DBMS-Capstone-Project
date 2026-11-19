@@ -41,7 +41,7 @@ services:
     runtime: node
     plan: free
     rootDir: frontend
-    buildCommand: NEXT_PUBLIC_API_URL="${API_URL}/api" npm ci && npm run build
+    buildCommand: export NEXT_PUBLIC_API_URL="${API_URL:-https://hostel-allocation-api.onrender.com}/api" && npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /
     envVars:
@@ -50,3 +50,5 @@ services:
           name: hostel-allocation-api
           type: web
           envVarKey: RENDER_EXTERNAL_URL
+      - key: NEXT_PUBLIC_API_URL
+        value: https://hostel-allocation-api.onrender.com/api

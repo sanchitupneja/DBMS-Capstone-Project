@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.API_URL ? `${process.env.API_URL}/api` : ''),
+  },
   outputFileTracingRoot: path.join(__dirname, "../"),
   cacheComponents: true,
   partialPrefetching: true,

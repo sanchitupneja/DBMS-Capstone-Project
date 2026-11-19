@@ -1,4 +1,15 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
+export function getApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host.includes('onrender.com')) {
+      return 'https://hostel-allocation-api.onrender.com/api';
+    }
+  }
+  return 'http://localhost:5000/api';
+}
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -23,15 +34,31 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${API_BASE}${endpoint}`;
+  const base = getApiBase();
+  const url = `${base}${endpoint}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...getAuthHeaders(),
     ...(options.headers as Record<string, string>),
   };
 
-  const response = await fetch(url, { ...options, headers });
-  const data: ApiResponse<T> = await response.json();
+  let response: Response;
+  try {
+    response = await fetch(url, { ...options, headers });
+  } catch {
+    const isRender = typeof window !== 'undefined' && window.location.hostname.includes('onrender.com');
+    const msg = isRender
+      ? 'Cannot connect to the backend server. Render free services spin down after inactivity and take 40-50 seconds to wake up. Please wait a few seconds and try again!'
+      : 'Network error: Unable to reach the API server. Please check your connection.';
+    throw new Error(msg);
+  }
+
+  let data: ApiResponse<T>;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`Server returned status ${response.status}. The backend may still be starting up, please try again in a moment.`);
+  }
 
   if (response.status === 401 && typeof window !== 'undefined') {
     const clearSession = () => {
@@ -46,7 +73,7 @@ async function request<T>(
       clearSession();
     } else {
       try {
-        const refreshRes = await fetch(`${API_BASE}/auth/refresh-token`, {
+        const refreshRes = await fetch(`${getApiBase()}/auth/refresh-token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken }),

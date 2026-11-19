@@ -20,8 +20,6 @@ async function connectWithRetry(maxRetries = 10, delayMs = 1500): Promise<void> 
 
 async function startServer(): Promise<void> {
   try {
-    await connectWithRetry();
-
     const app = createApp();
 
     const server = app.listen(PORT, () => {
@@ -29,10 +27,15 @@ async function startServer(): Promise<void> {
 ╔═══════════════════════════════════════════════╗
 ║     🏠 Hostel Room Allocation System          ║
 ║     Server running on port ${PORT}               ║
-║     Environment: ${process.env.NODE_ENV?.padEnd(27)}║
+║     Environment: ${(process.env.NODE_ENV ?? 'development').padEnd(27)}║
 ║     API Base URL: http://localhost:${PORT}/api   ║
 ╚═══════════════════════════════════════════════╝
       `);
+    });
+
+    // Connect to database with retry; runs non-blocking so health checks succeed immediately
+    connectWithRetry(15, 2000).catch((err) => {
+      console.error('⚠️ Database connection warning:', err instanceof Error ? err.message : err);
     });
 
     const shutdown = async (signal: string): Promise<void> => {
