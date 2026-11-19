@@ -1,0 +1,65 @@
+{
+  "name": "hostel-allocation-backend",
+  "version": "1.0.0",
+  "description": "Hostel Room Allocation System - Backend API",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
+    "dev:all": "concurrently --names \"BACKEND,FRONTEND,STUDIO\" --prefix-colors \"cyan,magenta,yellow\" \"npm run dev\" \"npm run dev --prefix frontend\" \"npx prisma studio --config prisma.config.ts --port 5555\"",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:prod": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:allocations": "tsx prisma/seed-allocations.ts",
+    "db:studio": "prisma studio --config prisma.config.ts --port 5555",
+    "db:reset": "prisma migrate reset --force",
+    "db:push": "prisma db push"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "keywords": [
+    "hostel",
+    "allocation",
+    "nodejs",
+    "express",
+    "prisma"
+  ],
+  "author": "DBMS Capstone Project",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.10.1",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "@types/pg": "^8.23.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mariadb": "^3.5.4",
+    "morgan": "^1.12.1",
+    "mysql2": "^3.24.6",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@prisma/migrate": "^7.10.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.6.5",
+    "concurrently": "^10.0.6",
+    "nodemon": "^3.1.14",
+    "prisma": "^7.10.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3"
+  }
+}
