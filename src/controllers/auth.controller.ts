@@ -76,8 +76,19 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   if (role === 'ADMIN') {
     user = await prisma.admin.findUnique({ where: { email } });
-  } else {
+  } else if (role === 'STUDENT') {
     user = await prisma.student.findUnique({ where: { email } });
+  } else {
+    user = (await prisma.admin.findUnique({ where: { email } })) ?? (await prisma.student.findUnique({ where: { email } }));
+  }
+
+  // Graceful fallback: if user selected the other role tab by mistake, still check the matching account
+  if (!user) {
+    if (role === 'ADMIN') {
+      user = await prisma.student.findUnique({ where: { email } });
+    } else {
+      user = await prisma.admin.findUnique({ where: { email } });
+    }
   }
 
   if (!user) {
@@ -91,7 +102,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   const tokens = generateTokenPair({ id: user.id, email: user.email, role: user.role });
 
-  if (role === 'ADMIN') {
+  if (user.role === Role.ADMIN) {
     await prisma.admin.update({
       where: { id: user.id },
       data: { refreshToken: tokens.refreshToken },

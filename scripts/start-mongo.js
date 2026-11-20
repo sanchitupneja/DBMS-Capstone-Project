@@ -3,8 +3,30 @@ const path = require('path');
 const fs = require('fs');
 const net = require('net');
 
-const MONGOD_PATH = 'C:\\Program Files\\MongoDB\\Server\\9.0\\bin\\mongod.exe';
-const MONGOSH_PATH = 'C:\\Users\\ASUS\\AppData\\Local\\Programs\\mongosh\\mongosh.exe';
+function findBinary(name, winCandidates = []) {
+  try {
+    const cmd = process.platform === 'win32' ? `where.exe ${name}` : `which ${name}`;
+    const out = execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().split(/\r?\n/)[0];
+    if (out && fs.existsSync(out)) return out;
+  } catch {}
+
+  for (const c of winCandidates) {
+    if (c && fs.existsSync(c)) return c;
+  }
+  return name;
+}
+
+const MONGOD_PATH = findBinary('mongod', [
+  'C:\\Program Files\\MongoDB\\Server\\9.0\\bin\\mongod.exe',
+  'C:\\Program Files\\MongoDB\\Server\\8.0\\bin\\mongod.exe',
+  'C:\\Program Files\\MongoDB\\Server\\7.0\\bin\\mongod.exe',
+  'C:\\Program Files\\MongoDB\\Server\\6.0\\bin\\mongod.exe',
+]);
+
+const MONGOSH_PATH = findBinary('mongosh', [
+  path.join(process.env.LOCALAPPDATA || '', 'Programs', 'mongosh', 'mongosh.exe'),
+  'C:\\Program Files\\mongosh\\mongosh.exe',
+]);
 const DB_PATH = path.resolve(__dirname, '..', '.mongo-data');
 const PORT = 27018;
 

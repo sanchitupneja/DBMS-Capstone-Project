@@ -21,11 +21,17 @@ out/
 prisma/*.db
 prisma/*.db-journal
 
-# ─── OS ──────────────────────────────────────────
+# ─── OS & Local DB ────────────────────────────────
 .DS_Store
 Thumbs.db
 *.log
 .mongo-data/
+*.wt
+diagnostic.data/
+journal/
+mongod.lock
+WiredTiger*
+_tmp/
 
 # ─── IDE ─────────────────────────────────────────
 .vscode/settings.json
