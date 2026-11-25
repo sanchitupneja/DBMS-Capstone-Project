@@ -8,8 +8,8 @@ RUN npm ci
 COPY . .
 
 # Prisma reads DATABASE_URL from schema.prisma. The generated client is
-# URL-agnostic, so a throwaway MongoDB URI is enough for code generation here.
-RUN DATABASE_URL="mongodb://127.0.0.1:27017/build" npm run db:generate && npm run build
+# URL-agnostic, so a dummy MySQL URI is enough for code generation here.
+RUN DATABASE_URL="mysql://root:placeholder@127.0.0.1:3306/hostel_allocation_db" npm run db:generate && npm run build
 
 ENV NODE_ENV=production
 
