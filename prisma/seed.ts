@@ -185,6 +185,18 @@ const ROOM_PLAN = [
   { roomNumber: 'B-401', hostel: 'girls', floor: 4, type: 'NON_AC',beds: 3, price:  6000, amenities: ['Fan','Shared Bathroom','Wardrobe']                   },
 ] as const;
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 5, delay = 600): Promise<T> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      await new Promise((r) => setTimeout(r, delay * attempt));
+    }
+  }
+  throw new Error('Retry failed');
+}
+
 async function main() {
   console.log('🌱 Starting database seeding...');
 
@@ -257,11 +269,13 @@ async function main() {
 
   for (const [id, fullName, email, phone, gender, course, yearOfStudy] of RAW_STUDENTS) {
     const studentId = `STU${String(id).padStart(7, '0')}`;
-    await prisma.student.deleteMany({ where: { studentId, NOT: { email: email as string } } });
-    const s = await prisma.student.upsert({
-      where: { email: email as string },
-      update: { fullName: fullName as string, phone: phone as string, gender: gender as 'MALE'|'FEMALE', course: course as string, yearOfStudy: yearOfStudy as number },
-      create: { email: email as string, passwordHash: studentHash, fullName: fullName as string, studentId, phone: phone as string, gender: gender as 'MALE'|'FEMALE', course: course as string, yearOfStudy: yearOfStudy as number },
+    const s = await withRetry(async () => {
+      await prisma.student.deleteMany({ where: { studentId, NOT: { email: email as string } } });
+      return await prisma.student.upsert({
+        where: { email: email as string },
+        update: { fullName: fullName as string, phone: phone as string, gender: gender as 'MALE'|'FEMALE', course: course as string, yearOfStudy: yearOfStudy as number },
+        create: { email: email as string, passwordHash: studentHash, fullName: fullName as string, studentId, phone: phone as string, gender: gender as 'MALE'|'FEMALE', course: course as string, yearOfStudy: yearOfStudy as number },
+      });
     });
     studentMap.set(id as number, s.id);
   }
