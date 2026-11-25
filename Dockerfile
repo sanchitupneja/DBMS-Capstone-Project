@@ -13,7 +13,7 @@ RUN DATABASE_URL="mysql://root:placeholder@127.0.0.1:3306/hostel_allocation_db" 
 
 ENV NODE_ENV=production
 
-EXPOSE 5000
+EXPOSE 5000 10000
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
