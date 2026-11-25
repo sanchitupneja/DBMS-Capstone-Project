@@ -84,6 +84,21 @@ export function globalErrorHandler(
     return;
   }
 
+  if (
+    err.constructor.name === 'PrismaClientInitializationError' ||
+    (err as unknown as { errorCode?: string }).errorCode === 'P1000' ||
+    err.message?.includes('Authentication failed against database server') ||
+    err.message?.includes("Can't reach database server")
+  ) {
+    sendError(
+      res,
+      'Database connection failed: Invalid MySQL password or server unreachable. Please update DATABASE_URL in your .env file with your MySQL password.',
+      500,
+      err.message
+    );
+    return;
+  }
+
   if (err.constructor.name === 'PrismaClientKnownRequestError') {
     const prismaError = err as unknown as { code: string; meta?: { target?: string[] } };
     if (prismaError.code === 'P2002') {

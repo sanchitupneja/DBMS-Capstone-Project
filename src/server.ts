@@ -38,6 +38,9 @@ async function startServer(): Promise<void> {
       console.error('⚠️ Database connection warning:', err instanceof Error ? err.message : err);
     });
 
+    // Keep event loop active
+    setInterval(() => {}, 1000 * 60 * 60);
+
     const shutdown = async (signal: string): Promise<void> => {
       console.log(`\n🛑 Received ${signal}. Shutting down gracefully...`);
       server.close(async () => {
