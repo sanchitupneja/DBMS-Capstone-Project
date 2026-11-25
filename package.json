@@ -1,22 +1,19 @@
 {
   "name": "hostel-allocation-backend",
   "version": "1.0.0",
-  "description": "Hostel Room Allocation System - Backend API (MongoDB)",
+  "description": "Hostel Room Allocation System - Backend API (MySQL)",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
-    "db:start": "node scripts/start-mongo.js",
-    "db:setup": "node scripts/setup-local-db.js",
-    "dev:all": "concurrently --names \"MONGO,BACKEND,FRONTEND\" --prefix-colors \"green,cyan,magenta\" \"npm run db:start\" \"npm run dev\" \"npm run dev --prefix frontend\"",
+    "dev:all": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"npm run dev\" \"npm run dev --prefix frontend\"",
     "build": "tsc",
     "start": "node dist/server.js",
-    "db:migrate": "prisma db push",
-    "db:migrate:prod": "prisma db push --skip-generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:prod": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:allocations": "tsx prisma/seed-allocations.ts",
     "db:studio": "prisma studio --port 5555",
-    "db:reset": "prisma db push --force-reset",
     "db:push": "prisma db push"
   },
   "prisma": {
@@ -28,7 +25,7 @@
     "nodejs",
     "express",
     "prisma",
-    "mongodb"
+    "mysql"
   ],
   "author": "DBMS Capstone Project",
   "license": "ISC",

@@ -1,11 +1,6 @@
 // ============================================================
 // Hostel Room Allocation System — Prisma Schema
-// Provider: MongoDB (NoSQL). Keep prisma/schema.prisma as the
-// single source of truth for the live application.
-//
-// The original MySQL schema and SQL dumps are preserved under
-// sql-reference/ for syllabus comparison — they are not used
-// by the application at runtime.
+// Provider: MySQL
 // ============================================================
 
 generator client {
@@ -13,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -60,72 +55,73 @@ enum Gender {
 }
 
 // ─────────────────────────────────────────────
-// MODEL: Student  → collection "students"
+// MODEL: Student
 // ─────────────────────────────────────────────
 
 model Student {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  email           String   @unique
-  passwordHash    String
-  fullName        String
-  studentId       String   @unique
-  phone           String?
-  gender          Gender
-  course          String
-  yearOfStudy     Int
-  role            Role     @default(STUDENT)
-  profileImageUrl String?
-  isEmailVerified Boolean  @default(false)
-  refreshToken    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String              @id @default(uuid())
+  email              String              @unique @db.VarChar(191)
+  passwordHash       String              @db.Text
+  fullName           String              @db.VarChar(191)
+  studentId          String              @unique @db.VarChar(100)
+  phone              String?             @db.VarChar(20)
+  gender             Gender
+  course             String              @db.VarChar(191)
+  yearOfStudy        Int
+  role               Role                @default(STUDENT)
+  profileImageUrl    String?             @db.Text
+  isEmailVerified    Boolean             @default(false)
+  refreshToken       String?             @db.Text
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   allocationRequests AllocationRequest[]
   allocations        Allocation[]
 
-  // @unique on email / studentId already creates the required indexes.
+  @@index([email])
+  @@index([studentId])
   @@map("students")
 }
 
 // ─────────────────────────────────────────────
-// MODEL: Admin  → collection "admins"
+// MODEL: Admin
 // ─────────────────────────────────────────────
 
 model Admin {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  email        String   @unique
-  passwordHash String
-  fullName     String
-  role         Role     @default(ADMIN)
-  refreshToken String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  email          String   @unique @db.VarChar(191)
+  passwordHash   String   @db.Text
+  fullName       String   @db.VarChar(191)
+  role           Role     @default(ADMIN)
+  refreshToken   String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   processedRequests AllocationRequest[] @relation("ProcessedBy")
   manualAllocations Allocation[]        @relation("AllocatedBy")
 
-  // @unique on email already creates the required index.
+  @@index([email])
   @@map("admins")
 }
 
 // ─────────────────────────────────────────────
-// MODEL: Hostel  → collection "hostels"
+// MODEL: Hostel
 // ─────────────────────────────────────────────
 
 model Hostel {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  name           String   @unique
-  description    String?
+  id             String     @id @default(uuid())
+  name           String     @unique @db.VarChar(191)
+  description    String?    @db.Text
   gender         Gender
-  address        String
-  totalRooms     Int      @default(0)
-  availableRooms Int      @default(0)
-  imageUrl       String?
-  // Stored as a BSON array: ["WiFi", "Gym", "Cafeteria"]
-  amenities      Json     @default("[]")
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  address        String     @db.VarChar(300)
+  totalRooms     Int        @default(0)
+  availableRooms Int        @default(0)
+  imageUrl       String?    @db.Text
+  // Stored as JSON array: ["WiFi","Gym","Cafeteria"]
+  amenities      Json       @default("[]")
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   rooms              Room[]
   allocationRequests AllocationRequest[]
@@ -135,25 +131,25 @@ model Hostel {
 }
 
 // ─────────────────────────────────────────────
-// MODEL: Room  → collection "rooms"
+// MODEL: Room
 // ─────────────────────────────────────────────
 
 model Room {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  hostelId     String     @db.ObjectId
-  roomNumber   String
-  floor        Int        @default(0)
-  roomType     RoomType
-  totalBeds    Int
-  occupiedBeds Int        @default(0)
-  status       RoomStatus @default(AVAILABLE)
+  id            String     @id @default(uuid())
+  hostelId      String     @db.VarChar(36)
+  roomNumber    String     @db.VarChar(20)
+  floor         Int        @default(0)
+  roomType      RoomType
+  totalBeds     Int
+  occupiedBeds  Int        @default(0)
+  status        RoomStatus @default(AVAILABLE)
   pricePerMonth Float
-  // Stored as a BSON array: ["AC", "Attached Bathroom"]
-  amenities    Json       @default("[]")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  // Stored as JSON array: ["AC","Attached Bathroom"]
+  amenities     Json       @default("[]")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  hostel      Hostel     @relation(fields: [hostelId], references: [id])
+  hostel      Hostel     @relation(fields: [hostelId], references: [id], onDelete: Cascade)
   allocations Allocation[]
 
   @@unique([hostelId, roomNumber])
@@ -164,28 +160,28 @@ model Room {
 }
 
 // ─────────────────────────────────────────────
-// MODEL: AllocationRequest  → collection "allocation_requests"
+// MODEL: AllocationRequest
 // ─────────────────────────────────────────────
 
 model AllocationRequest {
-  id                  String        @id @default(auto()) @map("_id") @db.ObjectId
-  studentId           String        @db.ObjectId
-  hostelId            String        @db.ObjectId
+  id                  String        @id @default(uuid())
+  studentId           String        @db.VarChar(36)
+  hostelId            String        @db.VarChar(36)
   preferredRoomType   RoomType
   preferredFloor      Int?
-  specialRequirements String?
+  specialRequirements String?       @db.Text
   status              RequestStatus @default(PENDING)
-  rejectionReason     String?
-  processedById       String?       @db.ObjectId
+  rejectionReason     String?       @db.Text
+  processedById       String?       @db.VarChar(36)
   processedAt         DateTime?
-  academicYear        String
+  academicYear        String        @db.VarChar(20)
   semester            Int
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  student     Student     @relation(fields: [studentId], references: [id])
-  hostel      Hostel      @relation(fields: [hostelId], references: [id])
-  processedBy Admin?      @relation("ProcessedBy", fields: [processedById], references: [id])
+  student     Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  hostel      Hostel     @relation(fields: [hostelId], references: [id], onDelete: Restrict)
+  processedBy Admin?     @relation("ProcessedBy", fields: [processedById], references: [id], onDelete: SetNull)
   allocation  Allocation?
 
   @@unique([studentId, academicYear, semester])
@@ -196,28 +192,28 @@ model AllocationRequest {
 }
 
 // ─────────────────────────────────────────────
-// MODEL: Allocation  → collection "allocations"
+// MODEL: Allocation
 // ─────────────────────────────────────────────
 
 model Allocation {
-  id            String           @id @default(auto()) @map("_id") @db.ObjectId
-  studentId     String           @db.ObjectId
-  roomId        String           @db.ObjectId
-  requestId     String           @unique @db.ObjectId
-  allocatedById String?          @db.ObjectId
+  id            String           @id @default(uuid())
+  studentId     String           @db.VarChar(36)
+  roomId        String           @db.VarChar(36)
+  requestId     String           @unique @db.VarChar(36)
+  allocatedById String?          @db.VarChar(36)
   status        AllocationStatus @default(ACTIVE)
   checkInDate   DateTime
   checkOutDate  DateTime?
-  academicYear  String
+  academicYear  String           @db.VarChar(20)
   semester      Int
-  notes         String?
+  notes         String?          @db.Text
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
-  student     Student           @relation(fields: [studentId], references: [id])
-  room        Room              @relation(fields: [roomId], references: [id])
-  request     AllocationRequest @relation(fields: [requestId], references: [id])
-  allocatedBy Admin?            @relation("AllocatedBy", fields: [allocatedById], references: [id])
+  student     Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  room        Room              @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  request     AllocationRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  allocatedBy Admin?            @relation("AllocatedBy", fields: [allocatedById], references: [id], onDelete: SetNull)
 
   @@unique([studentId, status, academicYear, semester])
   @@index([roomId, status])

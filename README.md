@@ -1,5 +1,5 @@
 # 🏠 HostelIQ — Smart Hostel Room Allocation Platform
-### *DBMS Capstone Project*
+### *DBMS Capstone Project (MySQL & MySQL Workbench)*
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.4-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19-blue?logo=react)
@@ -8,10 +8,10 @@
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)
 ![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express)
 ![Prisma](https://img.shields.io/badge/Prisma-6.19-2d3748?logo=prisma)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas%20%2F%20ReplSet-47a248?logo=mongodb)
+![MySQL](https://img.shields.io/badge/MySQL-8.0%20%2F%20Workbench-4479A1?logo=mysql&logoColor=white)
 ![Render](https://img.shields.io/badge/Deploy-Render-46e3b7?logo=render)
 
-A modern, full-stack campus accommodation and automated room allocation management system. HostelIQ empowers students with a seamless room reservation portal while providing hostel wardens and campus administrators with automated room assignment algorithms, real-time occupancy statistics, and comprehensive student housing analytics.
+A modern, full-stack campus accommodation and automated room allocation management system powered by **MySQL** and **Prisma ORM**. HostelIQ empowers students with a seamless room reservation portal while providing hostel wardens and campus administrators with automated room assignment algorithms, real-time occupancy statistics, and comprehensive student housing analytics.
 
 ---
 
@@ -22,8 +22,6 @@ A modern, full-stack campus accommodation and automated room allocation manageme
 | **Frontend Portal** | [https://hostel-allocation-frontend.onrender.com](https://hostel-allocation-frontend.onrender.com) | Responsive Next.js Web Application |
 | **Backend API** | [https://hostel-allocation-api.onrender.com](https://hostel-allocation-api.onrender.com) | Express & TypeScript REST API |
 | **API Health Check** | [https://hostel-allocation-api.onrender.com/api/health](https://hostel-allocation-api.onrender.com/api/health) | Real-time container & database status |
-
-> **Note on Free Hosting**: Render free instances spin down during periods of inactivity. If the service is asleep, the first request may take 30–50 seconds to initialize.
 
 ---
 
@@ -55,7 +53,7 @@ A modern, full-stack campus accommodation and automated room allocation manageme
 - **JWT Authentication**: Short-lived access tokens with automatic rotation via HTTP refresh tokens.
 - **Role-Based Access Control (RBAC)**: Enforced middleware boundaries guarding administrative endpoints.
 - **Bcrypt Encryption**: 12-round salted hashing for all stored credentials.
-- **Security Hardening**: Helmet HTTP headers, input schema validation via Zod, and configured Cross-Origin Resource Sharing (CORS).
+- **Concurrency & ACID Transactions**: Pessimistic row locking (`SELECT ... FOR UPDATE`) with serializable isolation preventing double allocation of beds.
 
 ---
 
@@ -72,13 +70,13 @@ flowchart LR
     subgraph Server ["Backend (Express 5 + TypeScript)"]
         Router["Express Router & Validation"]
         AuthCtrl["Auth & RBAC Middleware"]
-        AllocEngine["Allocation Algorithm Engine"]
+        AllocEngine["Allocation Algorithm Engine\n(Pessimistic Row Locking)"]
         PrismaORM["Prisma Client 6.19"]
     end
 
-    subgraph Database ["Database Layer (MongoDB)"]
-        MongoReplSet[("MongoDB Replica Set\n(rs0 / Atlas)")]
-        Collections[("Collections: Students, Admins,\nHostels, Rooms, Allocations")]
+    subgraph Database ["Database Layer (MySQL / Workbench)"]
+        MySQLDb[("MySQL 8.0 Server\n(InnoDB Engine)")]
+        Tables[("Tables: students, admins,\nhostels, rooms, allocations")]
     end
 
     UI --> AuthCtx
@@ -88,34 +86,41 @@ flowchart LR
     Router --> AllocEngine
     AllocEngine --> PrismaORM
     AuthCtrl --> PrismaORM
-    PrismaORM -->|Transactions / BSON| MongoReplSet
-    MongoReplSet --- Collections
+    PrismaORM -->|Connection Pool / SQL| MySQLDb
+    MySQLDb --- Tables
 ```
 
 ---
 
-## 🔄 DBMS Academic Contrast: SQL vs. NoSQL
+## 🛠️ Setting up with MySQL Workbench
 
-This capstone project implements the operational application using **MongoDB with Prisma 6** (requiring replica set support for multi-document ACID transactions). The relational MySQL/MariaDB schema is preserved in [`sql-reference/`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/sql-reference/README.md) for curriculum syllabus comparison:
+The database is built on relational principles using **MySQL** (InnoDB engine for ACID compliance and foreign key constraints).
 
-| Database Concept | Relational SQL Model (`sql-reference/`) | NoSQL Document Model (`prisma/schema.prisma`) |
+### Step 1: Open & Execute Script in MySQL Workbench
+1. Open **MySQL Workbench** and connect to your local MySQL instance (`localhost:3306`).
+2. Go to **File → Open SQL Script...** (or press `Ctrl + Shift + O`).
+3. Select [`sql/hostel_allocation_db.sql`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/sql/hostel_allocation_db.sql).
+4. Click the **Execute (Lightning Bolt ⚡)** button to run the script.
+5. In the **Navigator** pane on the left, right-click and choose **Refresh All**. You will see `hostel_allocation_db` populated with all tables, constraints, and initial records!
+
+### Relational Schema Overview
+
+| Table Name | Description | Key Constraints |
 | :--- | :--- | :--- |
-| **Data Entity** | `TABLE students (...)` | Collection documents (`model Student`) |
-| **Primary Key** | `CHAR(36)` UUID string | `ObjectId` mapped from `_id` |
-| **Entity Relationship** | `FOREIGN KEY ... REFERENCES` | Scalar `ObjectId` + Prisma virtual relations |
-| **Multi-Table Queries** | `INNER JOIN` / `LEFT JOIN` / `GROUP BY` | Prisma `include` nested lookups & aggregation |
-| **Schema Evolution** | `ALTER TABLE` / Migration files | Dynamic schema updates with `prisma db push` |
-| **Data Integrity** | `UNIQUE`, `CHECK`, Foreign key constraints | Prisma model attributes (`@unique`, `@@unique`, enum types) |
+| `admins` | Administrative users & wardens | Primary Key: `id` (UUID), Unique `email` |
+| `students` | Registered student profiles | Primary Key: `id` (UUID), Unique `email`, Unique `studentId` |
+| `hostels` | Hostel buildings & properties | Primary Key: `id` (UUID), Unique `name`, Enum `gender` |
+| `rooms` | Living quarters & bed capacity | Composite Unique `(hostelId, roomNumber)`, Foreign Key `hostelId` |
+| `allocation_requests` | Student room applications | Composite Unique `(studentId, academicYear, semester)` |
+| `allocations` | Active room occupancy records | Composite Unique `(studentId, status, academicYear, semester)` |
 
 ---
 
 ## 🚀 Quick Start & Local Development
 
-HostelIQ includes automated helper scripts that configure and run a local MongoDB replica set (`rs0`) on port `27018` with zero manual database administration.
-
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v18 or later)
-- [MongoDB Community Server](https://www.mongodb.com/try/download/community) installed locally (or a free MongoDB Atlas connection string)
+- [MySQL Server](https://dev.mysql.com/downloads/mysql/) & [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) installed and running on port 3306.
 
 ### 1. Clone & Install Dependencies
 ```bash
@@ -130,43 +135,50 @@ npm install
 npm install --prefix frontend
 ```
 
-### 2. Zero-Config Database Setup
-Run the automated database setup script. This script automatically starts the local MongoDB replica set on port `27018`, initializes `rs0`, syncs the schema via Prisma, and seeds 160+ students, hostels, rooms, and demo accounts:
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env` and set your MySQL password:
 ```bash
-npm run db:setup
+cp .env.example .env
+```
+Ensure `DATABASE_URL` in `.env` matches your MySQL credentials:
+```ini
+DATABASE_URL="mysql://root:YOUR_PASSWORD@localhost:3306/hostel_allocation_db"
 ```
 
-### 3. Start Development Servers
-Start MongoDB, the Express backend, and the Next.js frontend in a single unified command:
+### 3. Sync Database & Seed Data
+```bash
+# Push schema & generate Prisma Client
+npx prisma db push
+npx prisma generate
+
+# Seed sample data (hostels, rooms, 160+ students, demo accounts)
+npm run db:seed
+```
+
+### 4. Start Development Servers
+Start both backend API and frontend Next.js server with one unified command:
 ```bash
 npm run dev:all
 ```
 
 - **Frontend**: [http://localhost:3000](http://localhost:3000)
 - **Backend API**: [http://localhost:5000](http://localhost:5000)
-- **Prisma Studio (Optional GUI)**: `npm run db:studio` (available at [http://localhost:5555](http://localhost:5555))
+- **Prisma Studio (Web GUI)**: `npm run db:studio` (available at [http://localhost:5555](http://localhost:5555))
 
 ---
 
-## ☁️ Deployment Guide (Render & MongoDB Atlas)
+## ☁️ Deployment Guide (Render)
 
-The repository includes a ready-to-use [`render.yaml`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/render.yaml) Blueprint that provisions both web services simultaneously.
+The repository includes a ready-to-use [`render.yaml`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/render.yaml) Blueprint that provisions both the Express backend and Next.js frontend.
 
-### Step 1: Provision Free Cloud Database (MongoDB Atlas)
-1. Register for a free account at [MongoDB Atlas](https://www.mongodb.com/atlas) and create an **M0 Free Shared Cluster**.
-2. Under **Security → Network Access**, add IP address `0.0.0.0/0` (allow access from anywhere).
-3. Under **Security → Database Access**, create a user with read/write permissions.
-4. Click **Connect → Drivers → Node.js** and copy your connection string:
+1. Create a cloud MySQL database on any free cloud provider (e.g. [Aiven](https://aiven.io/mysql), [TiDB Cloud](https://tidbcloud.com), or [Clever Cloud](https://www.clever-cloud.com)).
+2. In [Render Dashboard](https://dashboard.render.com), click **New +** → **Blueprint**.
+3. Select your repository `sanchitupneja/DBMS-Capstone-Project` (branch `main`).
+4. When prompted for `DATABASE_URL`, paste your MySQL connection string:
    ```text
-   mongodb+srv://<USER>:<PASSWORD>@cluster.mongodb.net/hostel_allocation_db?retryWrites=true&w=majority
+   mysql://USER:PASSWORD@HOST:PORT/hostel_allocation_db
    ```
-
-### Step 2: Deploy with Render Blueprint
-1. Sign in to [Render](https://dashboard.render.com).
-2. Click **New +** → **Blueprint**.
-3. Select your GitHub repository (`sanchitupneja/DBMS-Capstone-Project`) and branch `main`.
-4. When prompted for `DATABASE_URL`, paste your MongoDB Atlas connection string.
-5. Click **Apply**. Render will automatically build the Docker API container and compile the Next.js frontend.
+5. Click **Apply**. Render will automatically deploy both services!
 
 ---
 
@@ -213,21 +225,22 @@ The repository includes a ready-to-use [`render.yaml`](file:///c:/Users/ASUS/One
 ```text
 DBMS-CapstoneProject/
 ├── Dockerfile                  # Production container definition for backend API
-├── docker-entrypoint.sh        # Startup script for schema sync & validation
+├── docker-entrypoint.sh        # Startup script for database sync & validation
 ├── render.yaml                 # Infrastructure-as-code Blueprint for Render
 ├── package.json                # Backend scripts and dependencies
 ├── tsconfig.json               # Backend TypeScript configuration
 ├── .env.example                # Template for environment configuration
 │
 ├── prisma/
-│   ├── schema.prisma           # Prisma 6 MongoDB object data models
+│   ├── schema.prisma           # Prisma 6 MySQL relational models
+│   ├── migrations/             # Migration history for MySQL
 │   ├── seed.ts                 # Database seeder (hostels, rooms, 160+ students)
 │   └── seed-allocations.ts     # Allocation record generation script
 │
-├── scripts/
-│   ├── start-mongo.js          # Local replica set daemon controller
-│   ├── setup-local-db.js       # 1-step automated setup and seeding script
-│   └── init-replset.js         # Mongo shell script to initialize rs0
+├── sql/
+│   ├── hostel_allocation_db.sql# Complete SQL script for MySQL Workbench
+│   ├── schema.sql              # Clean relational DDL definitions
+│   └── README.md               # Guide for executing scripts in MySQL Workbench
 │
 ├── src/
 │   ├── server.ts               # Express application entrypoint
@@ -239,27 +252,22 @@ DBMS-CapstoneProject/
 │   ├── services/               # Business logic & auto-allocation algorithms
 │   └── utils/                  # JWT utilities & standardized error classes
 │
-├── frontend/                   # Next.js 16 Web Application
-│   ├── package.json            # Frontend dependencies (React 19, Tailwind v4)
-│   ├── next.config.ts          # Next.js build and environment configuration
-│   ├── postcss.config.mjs      # Tailwind CSS v4 PostCSS pipeline
-│   ├── contexts/AuthContext.tsx# Client-side authentication provider
-│   ├── lib/api.ts              # Dynamic API client with Render auto-detection
-│   └── app/
-│       ├── layout.tsx          # Root HTML layout and providers
-│       ├── page.tsx            # Landing redirect
-│       ├── login/              # Unified Admin/Student sign-in page
-│       ├── register/           # Student registration page
-│       ├── dashboard/          # Role-based dashboard (Student / Admin KPI)
-│       ├── hostels/            # Interactive room explorer
-│       ├── my-room/            # Student allocation & roommate view
-│       ├── my-request/         # Application history & submission
-│       └── admin/              # Management views (hostels, rooms, requests)
-│
-└── sql-reference/              # Academic relational MySQL reference material
-    ├── README.md               # Syllabus documentation & conceptual mapping
-    ├── schema.sql              # Relational DDL definitions
-    └── hostel_allocation_db.sql# Sample relational data and JOIN queries
+└── frontend/                   # Next.js 16 Web Application
+    ├── package.json            # Frontend dependencies (React 19, Tailwind v4)
+    ├── next.config.ts          # Next.js build and environment configuration
+    ├── postcss.config.mjs      # Tailwind CSS v4 PostCSS pipeline
+    ├── contexts/AuthContext.tsx# Client-side authentication provider
+    ├── lib/api.ts              # Dynamic API client with Render auto-detection
+    └── app/
+        ├── layout.tsx          # Root HTML layout and providers
+        ├── page.tsx            # Landing redirect
+        ├── login/              # Unified Admin/Student sign-in page
+        ├── register/           # Student registration page
+        ├── dashboard/          # Role-based dashboard (Student / Admin KPI)
+        ├── hostels/            # Interactive room explorer
+        ├── my-room/            # Student allocation & roommate view
+        ├── my-request/         # Application history & submission
+        └── admin/              # Management views (hostels, rooms, requests)
 ```
 
 ---

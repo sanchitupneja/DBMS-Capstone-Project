@@ -31,16 +31,28 @@ export async function runAllocationEngine(
 
   const allocation = await prisma.$transaction(
     async (tx) => {
-      
-      // MongoDB transactions use snapshot isolation and retry write conflicts,
-      // so the old SQL `SELECT ... FOR UPDATE` row lock is not needed.
-      const room = await tx.room.findUnique({ where: { id: roomId } });
+      // Pessimistic locking (FOR UPDATE) ensures concurrent allocation
+      // requests cannot double-allocate the last available bed.
+      const lockedRooms = await tx.$queryRaw<Array<{
+        id: string;
+        occupied_beds: number;
+        total_beds: number;
+        status: string;
+        hostel_id: string;
+      }>>`
+        SELECT id, \`occupiedBeds\` AS occupied_beds, \`totalBeds\` AS total_beds,
+               status, \`hostelId\` AS hostel_id
+        FROM rooms
+        WHERE id = ${roomId}
+        FOR UPDATE
+      `;
 
-      if (!room) throw new NotFoundError('Room');
+      if (lockedRooms.length === 0) throw new NotFoundError('Room');
+      const room = lockedRooms[0];
 
-      if (room.occupiedBeds >= room.totalBeds) {
+      if (room.occupied_beds >= room.total_beds) {
         throw new ConflictError(
-          `Room is fully occupied (${room.occupiedBeds}/${room.totalBeds} beds filled). Please choose another room.`
+          `Room is fully occupied (${room.occupied_beds}/${room.total_beds} beds filled). Please choose another room.`
         );
       }
 
@@ -55,9 +67,9 @@ export async function runAllocationEngine(
         throw new ConflictError('Student already has an active room allocation');
       }
 
-      const newOccupiedBeds = room.occupiedBeds + 1;
+      const newOccupiedBeds = room.occupied_beds + 1;
       const newRoomStatus: RoomStatus =
-        newOccupiedBeds >= room.totalBeds ? RoomStatus.FULL : RoomStatus.PARTIALLY_OCCUPIED;
+        newOccupiedBeds >= room.total_beds ? RoomStatus.FULL : RoomStatus.PARTIALLY_OCCUPIED;
 
       const newAllocation = await tx.allocation.create({
         data: {
@@ -91,9 +103,8 @@ export async function runAllocationEngine(
       });
 
       if (newRoomStatus === RoomStatus.FULL) {
-        
         await tx.hostel.update({
-          where: { id: room.hostelId },
+          where: { id: room.hostel_id },
           data: { availableRooms: { decrement: 1 } },
         });
       }
@@ -101,8 +112,7 @@ export async function runAllocationEngine(
       return newAllocation;
     },
     {
-      // MongoDB does not support SQL isolation levels; write conflicts are
-      // detected and retried by the transaction itself.
+      isolationLevel: 'Serializable',
       maxWait: 5000,
       timeout: 10000,
     }

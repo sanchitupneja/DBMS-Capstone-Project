@@ -4,8 +4,7 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-// MongoDB connector in Prisma 6 connects directly from the URL in schema.prisma
-// (DATABASE_URL). No SQL driver adapter is needed.
+// MySQL PrismaClient connects using DATABASE_URL from environment / schema.prisma
 function createPrismaClient(): PrismaClient {
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import 'dotenv/config';
 import { seedAllocations, DEFAULT_ACADEMIC_YEAR } from './seed-allocations';
 
-// Prisma reads DATABASE_URL (mongodb+srv://...) from schema.prisma.
+// Prisma reads DATABASE_URL (mysql://...) from .env or schema.prisma.
 const prisma = new PrismaClient();
 
 const RAW_STUDENTS = [

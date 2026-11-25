@@ -49,7 +49,7 @@ export function createApp(): Application {
   app.get('/api/health', async (_req: Request, res: Response) => {
     let dbStatus = 'connected';
     try {
-      await prisma.$runCommandRaw({ ping: 1 });
+      await prisma.$queryRaw`SELECT 1`;
     } catch (e: unknown) {
       dbStatus = e instanceof Error ? `disconnected: ${e.message}` : 'disconnected';
     }

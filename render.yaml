@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://render.com/schema/render.yaml.json
-# Hostel Room Allocation System - Render Blueprint (MongoDB / Prisma 6)
+# Hostel Room Allocation System - Render Blueprint (MySQL / Prisma 6)
 #
-# Before applying this Blueprint, create a FREE MongoDB Atlas cluster
-# (https://www.mongodb.com/atlas) and copy its connection string. You will be
-# prompted for it as DATABASE_URL when the Blueprint is created. The URI must
-# include the database name, e.g.:
-#   mongodb+srv://USER:PASSWORD@cluster.mongodb.net/hostel_allocation_db?retryWrites=true&w=majority
+# Before applying this Blueprint, create or connect a MySQL database
+# (e.g. Aiven, Clever Cloud, TiDB Cloud, or any managed/self-hosted MySQL instance)
+# and copy its connection string. You will be prompted for it as DATABASE_URL when
+# the Blueprint is created. The URI must include the database name, e.g.:
+#   mysql://USER:PASSWORD@HOST:PORT/hostel_allocation_db
 services:
   # ── Express API (Docker) ─────────────────────────────────────────────────
   - type: web
@@ -15,7 +15,6 @@ services:
     dockerContext: .
     plan: free
     healthCheckPath: /api/health
-    # docker-entrypoint.sh runs `prisma db push` on start (MongoDB has no migrations).
     initialDeployHook: npm run db:seed
     envVars:
       - key: NODE_ENV
