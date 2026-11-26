@@ -46,6 +46,14 @@ export function createApp(): Application {
     app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
   }
 
+  app.get('/', (_req: Request, res: Response) => {
+    res.status(200).json({
+      status: 'ok',
+      message: 'Hostel Room Allocation API is running',
+      health: '/api/health',
+    });
+  });
+
   app.get('/api/health', async (_req: Request, res: Response) => {
     let dbStatus = 'connected';
     try {

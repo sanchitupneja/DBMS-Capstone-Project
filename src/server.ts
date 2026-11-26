@@ -2,7 +2,10 @@ import 'dotenv/config';
 import { createApp } from './app';
 import prisma from './config/database';
 
-const PORT = parseInt(process.env.PORT ?? '5000', 10);
+const PORT = parseInt(
+  process.env.PORT ?? (process.env.NODE_ENV === 'production' ? '10000' : '5000'),
+  10
+);
 
 async function connectWithRetry(maxRetries = 10, delayMs = 1500): Promise<void> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -22,7 +25,7 @@ async function startServer(): Promise<void> {
   try {
     const app = createApp();
 
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`
 ╔═══════════════════════════════════════════════╗
 ║     🏠 Hostel Room Allocation System          ║

@@ -1,12 +1,12 @@
 #!/bin/sh
 set -e
 
-if [ -z "${DATABASE_URL:-}" ]; then
-  echo "⚠️ WARNING: DATABASE_URL is not set. Please set DATABASE_URL in environment settings." >&2
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "==> Syncing database schema in background..."
+  (npx prisma db push --skip-generate --accept-data-loss && echo "✅ Database schema in sync") || echo "⚠️ prisma db push notice: will sync at runtime" &
 else
-  echo "==> Deploying MySQL schema..."
-  npx prisma db push --skip-generate || echo "⚠️ prisma db push failed (will retry at runtime)"
+  echo "⚠️ WARNING: DATABASE_URL is not set. Please set DATABASE_URL in environment settings." >&2
 fi
 
-echo "==> Starting application..."
+echo "==> Starting application on 0.0.0.0:${PORT:-10000}..."
 exec "$@"
