@@ -1,6 +1,6 @@
 # Deploying to Render (MySQL / MySQL Workbench version)
 
-The application uses **MySQL** with Prisma ORM 6.19. The complete SQL script for MySQL Workbench is located in [`sql/hostel_allocation_db.sql`](sql/hostel_allocation_db.sql).
+The application uses **MySQL** with Prisma ORM 6.19. The complete SQL script for MySQL Workbench is located in [`sql/hostel_allocation_db.sql`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/sql/hostel_allocation_db.sql).
 
 The Render Blueprint provisions two services:
 
@@ -54,7 +54,7 @@ Render will automatically:
 
 ## 4. Local Development with MySQL Workbench
 
-1. Open **MySQL Workbench** and execute [`sql/hostel_allocation_db.sql`](sql/hostel_allocation_db.sql).
+1. Open **MySQL Workbench** and execute [`sql/hostel_allocation_db.sql`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/sql/hostel_allocation_db.sql).
 2. Set your credentials in `.env`:
    ```ini
    DATABASE_URL="mysql://root:YOUR_PASSWORD@localhost:3306/hostel_allocation_db"

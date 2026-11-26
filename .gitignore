@@ -32,6 +32,7 @@ journal/
 mongod.lock
 WiredTiger*
 _tmp/
+.temp_dbms/
 
 # ─── IDE ─────────────────────────────────────────
 .vscode/settings.json
