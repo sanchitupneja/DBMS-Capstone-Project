@@ -5,7 +5,7 @@ export function getApiBase(): string {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host.includes('onrender.com')) {
-      return 'https://hostel-allocation-api.onrender.com/api';
+      return 'https://hostel-allocation-api-35k5.onrender.com/api';
     }
   }
   return 'http://localhost:5000/api';
