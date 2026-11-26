@@ -19,9 +19,10 @@ A modern, full-stack campus accommodation and automated room allocation manageme
 
 | Service | Live URL | Description |
 | :--- | :--- | :--- |
-| **Frontend Portal** | [https://hostel-allocation-frontend.onrender.com](https://hostel-allocation-frontend.onrender.com) | Responsive Next.js Web Application |
-| **Backend API** | [https://hostel-allocation-api.onrender.com](https://hostel-allocation-api.onrender.com) | Express & TypeScript REST API |
-| **API Health Check** | [https://hostel-allocation-api.onrender.com/api/health](https://hostel-allocation-api.onrender.com/api/health) | Real-time container & database status |
+| **Frontend Portal (Primary)** | [https://hostel-allocation-frontend-fyit.onrender.com](https://hostel-allocation-frontend-fyit.onrender.com) | Responsive Next.js 16 Web Application |
+| **Backend API** | [https://hostel-allocation-api-fyit.onrender.com](https://hostel-allocation-api-fyit.onrender.com) | Express 5 & TypeScript REST API |
+| **API Health Check** | [https://hostel-allocation-api-fyit.onrender.com/api/health](https://hostel-allocation-api-fyit.onrender.com/api/health) | Real-time container & database status (`"database": "connected"`) |
+| **API Root Status** | [https://hostel-allocation-api-fyit.onrender.com/](https://hostel-allocation-api-fyit.onrender.com/) | Live service confirmation |
 
 ---
 
@@ -99,7 +100,7 @@ The database is built on relational principles using **MySQL** (InnoDB engine fo
 ### Step 1: Open & Execute Script in MySQL Workbench
 1. Open **MySQL Workbench** and connect to your local MySQL instance (`localhost:3306`).
 2. Go to **File → Open SQL Script...** (or press `Ctrl + Shift + O`).
-3. Select [`sql/hostel_allocation_db.sql`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/sql/hostel_allocation_db.sql).
+3. Select [`sql/hostel_allocation_db.sql`](sql/hostel_allocation_db.sql).
 4. Click the **Execute (Lightning Bolt ⚡)** button to run the script.
 5. In the **Navigator** pane on the left, right-click and choose **Refresh All**. You will see `hostel_allocation_db` populated with all tables, constraints, and initial records!
 
@@ -167,18 +168,27 @@ npm run dev:all
 
 ---
 
-## ☁️ Deployment Guide (Render)
+## ☁️ Deployment Guide (Render & Railway MySQL)
 
-The repository includes a ready-to-use [`render.yaml`](file:///c:/Users/ASUS/OneDrive/DBMS-CapstoneProject/render.yaml) Blueprint that provisions both the Express backend and Next.js frontend.
+The repository includes a ready-to-use [`render.yaml`](render.yaml) Blueprint that provisions both the Express backend and Next.js frontend with automated SSL and health probes.
 
-1. Create a cloud MySQL database on any free cloud provider (e.g. [Aiven](https://aiven.io/mysql), [TiDB Cloud](https://tidbcloud.com), or [Clever Cloud](https://www.clever-cloud.com)).
-2. In [Render Dashboard](https://dashboard.render.com), click **New +** → **Blueprint**.
-3. Select your repository `sanchitupneja/DBMS-Capstone-Project` (branch `main`).
-4. When prompted for `DATABASE_URL`, paste your MySQL connection string:
+### 1. Provision Cloud MySQL Database
+Create a free cloud MySQL database on **[Railway](https://railway.com)** (or [TiDB Cloud](https://tidbcloud.com) / [Aiven](https://aiven.io/mysql)):
+1. On Railway, click **New Project → Provision MySQL**.
+2. Under the **Connect** tab, copy the **Public URL**:
    ```text
-   mysql://USER:PASSWORD@HOST:PORT/hostel_allocation_db
+   mysql://root:PASSWORD@HOST:PORT/railway
    ```
-5. Click **Apply**. Render will automatically deploy both services!
+3. *(Optional)* You can also connect to this cloud database directly in **MySQL Workbench** by entering the hostname, port, user `root`, and password!
+
+### 2. Deploy to Render via Blueprint
+1. In [Render Dashboard](https://dashboard.render.com), click **New +** → **Blueprint**.
+2. Select your repository `sanchitupneja/DBMS-Capstone-Project` (branch `main`).
+3. When prompted for `DATABASE_URL`, paste your MySQL connection string.
+4. Click **Apply Blueprint**. Render builds and links both services automatically:
+   - Synchronizes database tables (`prisma db push`)
+   - Binds to `0.0.0.0:10000` with instant health checks
+   - Compiles and serves the responsive Next.js frontend
 
 ---
 
